@@ -1,5 +1,5 @@
 {
-    "version": "v20260518151835",
+    "version": "v20260519222003",
     "best_model": "logistic_regression",
     "best_model_file": "models/best_model.pkl",
     "metrics": {
@@ -7,13 +7,13 @@
             "accuracy": 0.7988826815642458,
             "precision": 0.7638888888888888,
             "recall": 0.7432432432432432,
-            "model_file": "models/logistic_regression_v20260518151835.pkl"
+            "model_file": "models/logistic_regression_v20260519222003.pkl"
         },
         "random_forest": {
             "accuracy": 0.7821229050279329,
             "precision": 0.7272727272727273,
             "recall": 0.7567567567567568,
-            "model_file": "models/random_forest_v20260518151835.pkl"
+            "model_file": "models/random_forest_v20260519222003.pkl"
         }
     }
 }
