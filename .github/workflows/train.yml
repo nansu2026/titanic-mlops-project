@@ -1,0 +1,40 @@
+name: Continuous Training
+
+on:
+  push:
+    paths:
+      - "data/**"
+      - "src/**"
+  workflow_dispatch:
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Train models
+        run: |
+          python src/train.py
+
+      - name: Commit updated models and metrics
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add models/ metrics/
+          git commit -m "Update trained models and metrics" || echo "No changes to commit"
+          git push

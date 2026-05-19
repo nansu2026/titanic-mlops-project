@@ -1,0 +1,25 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  docker-build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t titanic-mlops-app .
+
+      - name: Test Docker container
+        run: |
+          docker run -d -p 5000:5000 --name titanic-container titanic-mlops-app
+          sleep 10
+          curl http://localhost:5000/
+          docker stop titanic-container
