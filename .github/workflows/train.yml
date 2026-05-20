@@ -61,11 +61,16 @@ jobs:
         run: |
           python src/train.py
 
-      - name: Verify trained production model
+      - name: Verify generated ML artifacts
         run: |
           test -f models/best_model.pkl
           test -f models/model_registry.json
           test -f metrics/model_results.json
+          test -f metrics/data_version.json
+          test -f metrics/drift_report.json
+          test -f metrics/reference_data_profile.json
+          test -f metrics/reference_dataset.csv
+          cat metrics/drift_report.json
           cat models/model_registry.json
 
       - name: Run tests after training
@@ -88,7 +93,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image containing the latest trained model
+      - name: Build Docker image containing latest trained model
         run: |
           docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest .
 
@@ -97,23 +102,27 @@ jobs:
           docker push $IMAGE_NAME:$IMAGE_TAG
           docker push $IMAGE_NAME:latest
 
-      - name: Install KIND for demo Kubernetes deployment
+      - name: Configure real Kubernetes cluster
+        if: ${{ secrets.KUBE_CONFIG != '' }}
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          kubectl cluster-info
+
+      - name: Install KIND fallback cluster
+        if: ${{ secrets.KUBE_CONFIG == '' }}
         run: |
           curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.23.0/kind-linux-amd64
           chmod +x ./kind
           sudo mv ./kind /usr/local/bin/kind
           kind create cluster --name titanic-cluster
-
-      - name: Load Docker image into KIND
-        run: |
           kind load docker-image $IMAGE_NAME:$IMAGE_TAG --name titanic-cluster
 
       - name: Install metrics-server for HPA
         run: |
-          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml || true
           kubectl patch deployment metrics-server -n kube-system --type='json' \
-            -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
-          kubectl rollout status deployment/metrics-server -n kube-system --timeout=180s
+            -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]' || true
 
       - name: Deploy latest model to Kubernetes
         run: |

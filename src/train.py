@@ -71,9 +71,12 @@ def train_models():
 
     data_path = config["data"]["path"]
     version_file = config["data"]["version_file"]
+
     reference_profile = config["data"]["reference_profile"]
+    reference_dataset = config["data"]["reference_dataset"]
+
     drift_report_path = config["data"]["drift_report"]
-    drift_threshold = config["data"]["drift_threshold"]
+    drift_p_value_threshold = config["data"]["drift_p_value_threshold"]
 
     model_path = config["model"]["path"]
     registry_path = config["model"]["registry_path"]
@@ -95,11 +98,14 @@ def train_models():
     with open("metrics/data_profile.json", "w") as file:
         json.dump(current_profile, file, indent=4)
 
+    with open(reference_profile, "w") as file:
+        json.dump(current_profile, file, indent=4)
+
     drift_report = detect_data_drift(
-        current_profile=current_profile,
-        reference_profile_path=reference_profile,
+        current_df=df,
+        reference_data_path=reference_dataset,
         drift_report_path=drift_report_path,
-        threshold=drift_threshold
+        p_value_threshold=drift_p_value_threshold
     )
 
     X, y = preprocess_data(df)
@@ -157,6 +163,7 @@ def train_models():
 
             mlflow.log_artifact(version_file)
             mlflow.log_artifact("metrics/data_profile.json")
+            mlflow.log_artifact(reference_profile)
             mlflow.log_artifact(drift_report_path)
 
             mlflow.sklearn.log_model(
@@ -202,6 +209,8 @@ def train_models():
         "training_time": datetime.now().isoformat(),
         "data_hash": data_version["data_hash"],
         "data_version_file": version_file,
+        "reference_profile_file": reference_profile,
+        "reference_dataset_file": reference_dataset,
         "drift_report_file": drift_report_path,
         "drift_detected": drift_report["drift_detected"],
         "best_model_name": best_model_name,

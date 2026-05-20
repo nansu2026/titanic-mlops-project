@@ -2,8 +2,9 @@ data:
   path: data/titanic.csv
   version_file: metrics/data_version.json
   reference_profile: metrics/reference_data_profile.json
+  reference_dataset: metrics/reference_dataset.csv
   drift_report: metrics/drift_report.json
-  drift_threshold: 0.20
+  drift_p_value_threshold: 0.05
 
 model:
   path: models/best_model.pkl
