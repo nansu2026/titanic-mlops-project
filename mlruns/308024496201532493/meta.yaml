@@ -1,8 +1,0 @@
-artifact_location: file:///workspaces/titanic-mlops-project/mlruns/308024496201532493
-creation_time: 1779295713724
-experiment_id: '308024496201532493'
-last_update_time: 1779295713724
-lifecycle_stage: active
-name: Titanic_MLOps_Experiment
-trace_location: null
-workspace: default

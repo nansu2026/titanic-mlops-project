@@ -1,9 +1,9 @@
 {
-    "version": "v20260520171231",
+    "version": "v20260520175025",
     "mlflow_experiment": "Titanic_MLOps_Experiment",
     "mlflow_tracking_uri": "file:./mlruns",
     "mlflow_registered_model": "TitanicSurvivalModel",
-    "best_mlflow_run_id": "7032ad37fded43a8a80abaf9159c0cfa",
+    "best_mlflow_run_id": "e53b2776fc564f9fa996666b7658b514",
     "new_training_best_model": "random_forest",
     "new_training_best_accuracy": 0.8268156424581006,
     "previous_production_accuracy": 0.8268156424581006,
@@ -12,21 +12,21 @@
     "production_model_name": "random_forest",
     "production_accuracy": 0.8268156424581006,
     "production_model_file": "models/best_model.pkl",
-    "production_source_file": "models/random_forest_v20260520171231.pkl",
+    "production_source_file": "models/random_forest_v20260520175025.pkl",
     "metrics": {
         "logistic_regression": {
             "accuracy": 0.770949720670391,
             "precision": 0.71875,
             "recall": 0.6666666666666666,
-            "model_file": "models/logistic_regression_v20260520171231.pkl",
-            "mlflow_run_id": "05264d0287fb422ab5407354d89aceac"
+            "model_file": "models/logistic_regression_v20260520175025.pkl",
+            "mlflow_run_id": "93172e09a0a44dbfaf30564d547fcdf6"
         },
         "random_forest": {
             "accuracy": 0.8268156424581006,
             "precision": 0.796875,
             "recall": 0.7391304347826086,
-            "model_file": "models/random_forest_v20260520171231.pkl",
-            "mlflow_run_id": "7032ad37fded43a8a80abaf9159c0cfa"
+            "model_file": "models/random_forest_v20260520175025.pkl",
+            "mlflow_run_id": "e53b2776fc564f9fa996666b7658b514"
         }
     }
 }

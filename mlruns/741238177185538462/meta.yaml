@@ -1,8 +1,0 @@
-artifact_location: /workspaces/titanic-mlops-project/mlruns/741238177185538462
-creation_time: 1779289197887
-experiment_id: '741238177185538462'
-last_update_time: 1779289197887
-lifecycle_stage: active
-name: MLflow Demo
-trace_location: null
-workspace: default
