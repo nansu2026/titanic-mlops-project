@@ -1,176 +1,324 @@
+import os
 import json
 import yaml
 import joblib
-from pathlib import Path
-from flask import Flask, request, jsonify
 import pandas as pd
 
+from flask import Flask, request, jsonify, render_template_string
 
 app = Flask(__name__)
 
 
-def load_config():
-    with open("config.yaml", "r") as file:
-        return yaml.safe_load(file)
+# =========================
+# Load configuration
+# =========================
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+
+MODEL_PATH = config["model"]["path"]
+REGISTRY_PATH = config["model"]["registry_path"]
+
+# =========================
+# Load trained model
+# =========================
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(
+        f"Model file not found at {MODEL_PATH}. Train model first."
+    )
+
+model = joblib.load(MODEL_PATH)
 
 
-config = load_config()
-
-MODEL_PATH = Path(config["model"]["path"])
-REGISTRY_PATH = Path(config["model"]["registry_path"])
-
-
-def load_model():
-    if not MODEL_PATH.exists():
-        raise FileNotFoundError(
-            f"Model not found: {MODEL_PATH}. Please run: python src/train.py"
-        )
-    return joblib.load(MODEL_PATH)
-
-
-def load_model_metadata():
-    if REGISTRY_PATH.exists():
-        with open(REGISTRY_PATH, "r") as file:
-            return json.load(file)
-
-    return {
-        "message": "Model registry not found",
-        "model_path": str(MODEL_PATH)
-    }
-
-
-model = load_model()
-
-
+# =========================
+# Home Route
+# =========================
 @app.route("/")
 def home():
     return jsonify({
         "message": "Titanic MLOps API is running",
-        "form_url": "/form",
         "health_url": "/health",
-        "metadata_url": "/metadata",
-        "predict_url": "/predict"
+        "predict_url": "/predict",
+        "form_url": "/form",
+        "metadata_url": "/metadata"
     })
 
 
+# =========================
+# Health Check
+# =========================
 @app.route("/health")
 def health():
     return jsonify({
         "status": "healthy",
-        "model_loaded": model is not None,
-        "model_path": str(MODEL_PATH)
-    }), 200
-
-
-@app.route("/metadata")
-def metadata():
-    return jsonify(load_model_metadata())
-
-
-@app.route("/predict", methods=["POST"])
-def predict():
-    data = request.get_json()
-
-    required_fields = ["Pclass", "Sex", "Age", "Fare", "Embarked"]
-
-    for field in required_fields:
-        if field not in data:
-            return jsonify({"error": f"Missing required field: {field}"}), 400
-
-    input_data = pd.DataFrame([{
-        "Pclass": int(data["Pclass"]),
-        "Sex": data["Sex"],
-        "Age": float(data["Age"]),
-        "Fare": float(data["Fare"]),
-        "Embarked": data["Embarked"]
-    }])
-
-    prediction = model.predict(input_data)[0]
-
-    return jsonify({
-        "survival_prediction": int(prediction)
+        "model_loaded": True
     })
 
 
+# =========================
+# Metadata Route
+# =========================
+@app.route("/metadata")
+def metadata():
+    if os.path.exists(REGISTRY_PATH):
+        with open(REGISTRY_PATH, "r") as file:
+            registry = json.load(file)
+
+        return jsonify(registry)
+
+    return jsonify({
+        "error": "Registry file not found"
+    }), 404
+
+
+# =========================
+# Prediction API
+# =========================
+@app.route("/predict", methods=["POST"])
+def predict():
+
+    data = request.get_json(silent=True)
+
+    if data is None:
+        return jsonify({
+            "error": "Invalid request. Please send JSON data using POST."
+        }), 400
+
+    required_fields = [
+        "Pclass",
+        "Sex",
+        "Age",
+        "Fare",
+        "Embarked"
+    ]
+
+    missing_fields = [
+        field for field in required_fields
+        if field not in data
+    ]
+
+    if missing_fields:
+        return jsonify({
+            "error": f"Missing fields: {missing_fields}"
+        }), 400
+
+    try:
+        pclass = int(data["Pclass"])
+        sex = str(data["Sex"]).lower()
+        age = float(data["Age"])
+        fare = float(data["Fare"])
+        embarked = str(data["Embarked"]).upper()
+
+        # =========================
+        # Input Validation
+        # =========================
+
+        if pclass not in [1, 2, 3]:
+            return jsonify({
+                "error": "Pclass must be 1, 2, or 3"
+            }), 400
+
+        if sex not in ["male", "female"]:
+            return jsonify({
+                "error": "Sex must be male or female"
+            }), 400
+
+        if embarked not in ["S", "C", "Q"]:
+            return jsonify({
+                "error": "Embarked must be S, C, or Q"
+            }), 400
+
+        if age < 0:
+            return jsonify({
+                "error": "Age cannot be negative"
+            }), 400
+
+        if fare < 0:
+            return jsonify({
+                "error": "Fare cannot be negative"
+            }), 400
+
+        input_df = pd.DataFrame([{
+            "Pclass": pclass,
+            "Sex": sex,
+            "Age": age,
+            "Fare": fare,
+            "Embarked": embarked
+        }])
+
+        prediction = model.predict(input_df)[0]
+
+        probability = None
+
+        if hasattr(model, "predict_proba"):
+            probability = float(
+                model.predict_proba(input_df)[0][1]
+            )
+
+        return jsonify({
+            "prediction": int(prediction),
+            "survived": bool(prediction),
+            "survival_probability": probability
+        })
+
+    except Exception as error:
+        return jsonify({
+            "error": str(error)
+        }), 500
+
+
+# =========================
+# HTML Form UI
+# =========================
 @app.route("/form")
 def form():
-    return """
+
+    html = """
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Titanic MLOps Prediction</title>
+        <title>Titanic Survival Prediction</title>
+
+        <style>
+            body {
+                font-family: Arial;
+                background-color: #f4f4f4;
+                padding: 40px;
+            }
+
+            .container {
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                max-width: 500px;
+                margin: auto;
+                box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            }
+
+            h1 {
+                text-align: center;
+                color: #333;
+            }
+
+            input, select {
+                width: 100%;
+                padding: 10px;
+                margin-top: 10px;
+                margin-bottom: 20px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+            }
+
+            button {
+                width: 100%;
+                padding: 12px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                background-color: #0056b3;
+            }
+
+            .result {
+                margin-top: 20px;
+                padding: 15px;
+                background-color: #e9ecef;
+                border-radius: 5px;
+            }
+        </style>
     </head>
+
     <body>
-        <h2>Titanic Survival Prediction</h2>
 
-        <form action="/predict_form" method="post">
-            <label>Passenger Class</label>
-            <select name="Pclass" required>
-                <option value="1">1st Class</option>
-                <option value="2">2nd Class</option>
-                <option value="3" selected>3rd Class</option>
-            </select><br><br>
+        <div class="container">
 
-            <label>Sex</label>
-            <select name="Sex" required>
-                <option value="male" selected>Male</option>
-                <option value="female">Female</option>
-            </select><br><br>
+            <h1>Titanic Survival Prediction</h1>
 
-            <label>Age</label>
-            <input type="number" step="0.1" name="Age" value="25" required><br><br>
+            <form id="predictionForm">
 
-            <label>Fare</label>
-            <input type="number" step="0.1" name="Fare" value="7.25" required><br><br>
+                <label>Pclass</label>
+                <select name="Pclass">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                </select>
 
-            <label>Embarked</label>
-            <select name="Embarked" required>
-                <option value="S" selected>S - Southampton</option>
-                <option value="C">C - Cherbourg</option>
-                <option value="Q">Q - Queenstown</option>
-            </select><br><br>
+                <label>Sex</label>
+                <select name="Sex">
+                    <option value="male" selected>Male</option>
+                    <option value="female">Female</option>
+                </select>
 
-            <button type="submit">Predict Survival</button>
-        </form>
+                <label>Age</label>
+                <input type="number" name="Age" value="22" required>
 
-        <br>
-        <a href="/health">Health</a>
-        <a href="/metadata">Model Metadata</a>
+                <label>Fare</label>
+                <input type="number" step="0.01" name="Fare" value="7.25" required>
+
+                <label>Embarked</label>
+                <select name="Embarked">
+                    <option value="S" selected>S</option>
+                    <option value="C">C</option>
+                    <option value="Q">Q</option>
+                </select>
+
+                <button type="submit">Predict Survival</button>
+
+            </form>
+
+            <div class="result" id="result"></div>
+
+        </div>
+
+        <script>
+
+            document.getElementById("predictionForm")
+                .addEventListener("submit", async function(event) {
+
+                event.preventDefault();
+
+                const formData = new FormData(event.target);
+
+                const data = {
+                    Pclass: parseInt(formData.get("Pclass")),
+                    Sex: formData.get("Sex"),
+                    Age: parseFloat(formData.get("Age")),
+                    Fare: parseFloat(formData.get("Fare")),
+                    Embarked: formData.get("Embarked")
+                };
+
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                document.getElementById("result").innerHTML =
+                    "<pre>" + JSON.stringify(result, null, 2) + "</pre>";
+            });
+
+        </script>
+
     </body>
     </html>
     """
 
-
-@app.route("/predict_form", methods=["POST"])
-def predict_form():
-    input_data = pd.DataFrame([{
-        "Pclass": int(request.form["Pclass"]),
-        "Sex": request.form["Sex"],
-        "Age": float(request.form["Age"]),
-        "Fare": float(request.form["Fare"]),
-        "Embarked": request.form["Embarked"]
-    }])
-
-    prediction = model.predict(input_data)[0]
-    result = "Survived" if prediction == 1 else "Did Not Survive"
-
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <body>
-        <h2>Prediction Result</h2>
-        <h3>{result}</h3>
-        <p>Prediction value: {int(prediction)}</p>
-        <a href="/form">Try Again</a>
-    </body>
-    </html>
-    """
+    return render_template_string(html)
 
 
+# =========================
+# Run Flask app
+# =========================
 if __name__ == "__main__":
-    server_config = config.get("server", {})
     app.run(
-        host=server_config.get("host", "0.0.0.0"),
-        port=server_config.get("port", 5000),
-        debug=True
+        host=config["server"]["host"],
+        port=config["server"]["port"],
+        debug=False
     )

@@ -7,7 +7,13 @@ import mlflow.sklearn
 from datetime import datetime
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    confusion_matrix,
+)
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -75,6 +81,16 @@ def train_models():
     df = load_data(data_path)
     X, y = preprocess_data(df)
 
+    data_profile = {
+        "row_count": int(len(df)),
+        "columns": list(df.columns),
+        "missing_values": df.isnull().sum().to_dict(),
+        "target_distribution": df["Survived"].value_counts().to_dict(),
+    }
+
+    with open("metrics/data_profile.json", "w") as file:
+        json.dump(data_profile, file, indent=4)
+
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
@@ -113,6 +129,8 @@ def train_models():
             accuracy = accuracy_score(y_test, predictions)
             precision = precision_score(y_test, predictions, zero_division=0)
             recall = recall_score(y_test, predictions, zero_division=0)
+            f1 = f1_score(y_test, predictions, zero_division=0)
+            conf_matrix = confusion_matrix(y_test, predictions).tolist()
 
             model_file = f"models/{model_name}_{version}.pkl"
             joblib.dump(pipeline, model_file)
@@ -121,10 +139,14 @@ def train_models():
             mlflow.log_param("version", version)
             mlflow.log_param("data_path", data_path)
             mlflow.log_param("test_size", 0.2)
+            mlflow.log_param("registered_model_name", registered_model_name)
 
             mlflow.log_metric("accuracy", accuracy)
             mlflow.log_metric("precision", precision)
             mlflow.log_metric("recall", recall)
+            mlflow.log_metric("f1_score", f1)
+
+            mlflow.log_artifact("metrics/data_profile.json")
 
             mlflow.sklearn.log_model(
                 sk_model=pipeline,
@@ -136,6 +158,8 @@ def train_models():
                 "accuracy": accuracy,
                 "precision": precision,
                 "recall": recall,
+                "f1_score": f1,
+                "confusion_matrix": conf_matrix,
                 "model_file": model_file,
                 "mlflow_run_id": run.info.run_id
             }
@@ -168,6 +192,7 @@ def train_models():
 
     registry = {
         "version": version,
+        "training_time": datetime.now().isoformat(),
         "mlflow_experiment": experiment_name,
         "mlflow_tracking_uri": mlflow_tracking_uri,
         "mlflow_registered_model": registered_model_name,
@@ -181,6 +206,7 @@ def train_models():
         "production_accuracy": production_accuracy,
         "production_model_file": model_path,
         "production_source_file": production_source_file,
+        "data_profile_file": "metrics/data_profile.json",
         "metrics": results
     }
 

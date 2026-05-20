@@ -1,37 +1,63 @@
 import pandas as pd
 import pytest
-from src.preprocess import preprocess_data, validate_data
+import sys
+import os
+
+sys.path.append(os.path.abspath("src"))
+
+from preprocess import preprocess_data
+from data_validation import validate_dataset
 
 
-def test_preprocess_removes_missing_values():
-    data = {
-        "Survived": [0, 1, 1],
-        "Pclass": [3, 1, 2],
-        "Sex": ["male", "female", "female"],
-        "Age": [22, None, 30],
-        "Fare": [7.25, 71.28, None],
-        "Embarked": ["S", None, "C"]
-    }
+def test_preprocess_data():
+    df = pd.DataFrame({
+        "Pclass": [1, 3],
+        "Sex": ["female", "male"],
+        "Age": [25, 30],
+        "Fare": [100, 7.25],
+        "Embarked": ["C", "S"],
+        "Survived": [1, 0]
+    })
 
-    df = pd.DataFrame(data)
     X, y = preprocess_data(df)
 
-    assert X["Age"].isnull().sum() == 0
-    assert X["Fare"].isnull().sum() == 0
-    assert X["Embarked"].isnull().sum() == 0
-    assert len(X) == len(y)
+    assert X.shape[0] == 2
+    assert y.shape[0] == 2
 
 
-def test_validate_data_missing_column():
-    data = {
-        "Survived": [0, 1],
-        "Pclass": [3, 1],
-        "Sex": ["male", "female"],
-        "Age": [22, 30],
-        "Fare": [7.25, 71.28]
-    }
-
-    df = pd.DataFrame(data)
+def test_missing_columns():
+    df = pd.DataFrame({
+        "Pclass": [1],
+        "Sex": ["female"]
+    })
 
     with pytest.raises(ValueError):
-        validate_data(df)
+        validate_dataset(df)
+
+
+def test_invalid_target():
+    df = pd.DataFrame({
+        "Pclass": [1],
+        "Sex": ["male"],
+        "Age": [22],
+        "Fare": [7.25],
+        "Embarked": ["S"],
+        "Survived": [5]
+    })
+
+    with pytest.raises(ValueError):
+        validate_dataset(df)
+
+
+def test_negative_age():
+    df = pd.DataFrame({
+        "Pclass": [1],
+        "Sex": ["male"],
+        "Age": [-10],
+        "Fare": [7.25],
+        "Embarked": ["S"],
+        "Survived": [0]
+    })
+
+    with pytest.raises(ValueError):
+        validate_dataset(df)

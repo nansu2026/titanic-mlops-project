@@ -32,7 +32,12 @@ def test_predict_route():
     response = client.post("/predict", json=sample_data)
 
     assert response.status_code == 200
-    assert "survival_prediction" in response.get_json()
+
+    result = response.get_json()
+
+    assert "prediction" in result
+    assert "survived" in result
+    assert "survival_probability" in result
 
 
 def test_predict_missing_field():

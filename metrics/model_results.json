@@ -3,14 +3,36 @@
         "accuracy": 0.770949720670391,
         "precision": 0.71875,
         "recall": 0.6666666666666666,
-        "model_file": "models/logistic_regression_v20260520175025.pkl",
-        "mlflow_run_id": "93172e09a0a44dbfaf30564d547fcdf6"
+        "f1_score": 0.6917293233082706,
+        "confusion_matrix": [
+            [
+                92,
+                18
+            ],
+            [
+                23,
+                46
+            ]
+        ],
+        "model_file": "models/logistic_regression_v20260520190905.pkl",
+        "mlflow_run_id": "e318738a12ac4b20aea8322b10d11aa6"
     },
     "random_forest": {
         "accuracy": 0.8268156424581006,
         "precision": 0.796875,
         "recall": 0.7391304347826086,
-        "model_file": "models/random_forest_v20260520175025.pkl",
-        "mlflow_run_id": "e53b2776fc564f9fa996666b7658b514"
+        "f1_score": 0.7669172932330827,
+        "confusion_matrix": [
+            [
+                97,
+                13
+            ],
+            [
+                18,
+                51
+            ]
+        ],
+        "model_file": "models/random_forest_v20260520190905.pkl",
+        "mlflow_run_id": "aa3e36b1060b45f79536de7cb1a298b7"
     }
 }

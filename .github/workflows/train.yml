@@ -1,4 +1,4 @@
-name: Continuous Training
+name: Continuous Training Pipeline
 
 on:
   push:
@@ -6,14 +6,13 @@ on:
       - "data/**"
       - "src/**"
       - "config.yaml"
+      - "requirements.txt"
+      - "tests/**"
   workflow_dispatch:
 
 jobs:
-  train:
+  continuous-training:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout repository
@@ -22,25 +21,34 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run automatic model training
-        run: |
-          python src/train.py
-
-      - name: Run tests after training
+      - name: Run tests before training
         run: |
           pytest
 
-      - name: Commit updated model, metrics, and MLflow metadata
+      - name: Train model with MLflow
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git add models/ metrics/ mlruns/
-          git commit -m "Automatic model retraining after data or code change" || echo "No changes to commit"
-          git push
+          python src/train.py
+
+      - name: Upload trained model and metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model-and-metrics
+          path: |
+            models/
+            metrics/
+            mlruns/
+
+      - name: Show model registry
+        run: |
+          cat models/model_registry.json
+
+      - name: Show training results
+        run: |
+          cat metrics/model_results.json
