@@ -1,9 +1,14 @@
 data:
   path: data/titanic.csv
+  version_file: metrics/data_version.json
+  reference_profile: metrics/reference_data_profile.json
+  drift_report: metrics/drift_report.json
+  drift_threshold: 0.20
 
 model:
   path: models/best_model.pkl
   registry_path: models/model_registry.json
+  history_path: models/model_registry_history.json
   minimum_accuracy: 0.75
 
 mlflow:

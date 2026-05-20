@@ -7,13 +7,7 @@ import mlflow.sklearn
 from datetime import datetime
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    confusion_matrix,
-)
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -22,6 +16,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 
 from preprocess import load_data, preprocess_data
+from data_versioning import save_data_version
+from drift_detection import create_data_profile, detect_data_drift
 
 
 def load_config():
@@ -33,63 +29,80 @@ def build_preprocessor():
     numeric_features = ["Pclass", "Age", "Fare"]
     categorical_features = ["Sex", "Embarked"]
 
-    numeric_transformer = Pipeline(steps=[
+    numeric_transformer = Pipeline([
         ("imputer", SimpleImputer(strategy="median")),
         ("scaler", StandardScaler())
     ])
 
-    categorical_transformer = Pipeline(steps=[
+    categorical_transformer = Pipeline([
         ("imputer", SimpleImputer(strategy="most_frequent")),
         ("encoder", OneHotEncoder(handle_unknown="ignore"))
     ])
 
-    return ColumnTransformer(
-        transformers=[
-            ("num", numeric_transformer, numeric_features),
-            ("cat", categorical_transformer, categorical_features)
-        ]
-    )
+    return ColumnTransformer([
+        ("num", numeric_transformer, numeric_features),
+        ("cat", categorical_transformer, categorical_features)
+    ])
 
 
 def get_previous_best_accuracy(registry_path):
     if os.path.exists(registry_path):
         with open(registry_path, "r") as file:
-            old_registry = json.load(file)
-            return old_registry.get("production_accuracy", 0)
-
+            registry = json.load(file)
+            return registry.get("production_accuracy", 0)
     return 0
+
+
+def append_registry_history(history_path, registry):
+    history = []
+
+    if os.path.exists(history_path):
+        with open(history_path, "r") as file:
+            history = json.load(file)
+
+    history.append(registry)
+
+    with open(history_path, "w") as file:
+        json.dump(history, file, indent=4)
 
 
 def train_models():
     config = load_config()
 
     data_path = config["data"]["path"]
+    version_file = config["data"]["version_file"]
+    reference_profile = config["data"]["reference_profile"]
+    drift_report_path = config["data"]["drift_report"]
+    drift_threshold = config["data"]["drift_threshold"]
+
     model_path = config["model"]["path"]
     registry_path = config["model"]["registry_path"]
+    history_path = config["model"]["history_path"]
     minimum_accuracy = config["model"]["minimum_accuracy"]
 
-    mlflow_tracking_uri = config["mlflow"]["tracking_uri"]
-    experiment_name = config["mlflow"]["experiment_name"]
-    registered_model_name = config["mlflow"]["registered_model_name"]
+    mlflow.set_tracking_uri(config["mlflow"]["tracking_uri"])
+    mlflow.set_experiment(config["mlflow"]["experiment_name"])
 
     os.makedirs("models", exist_ok=True)
     os.makedirs("metrics", exist_ok=True)
 
-    mlflow.set_tracking_uri(mlflow_tracking_uri)
-    mlflow.set_experiment(experiment_name)
-
     df = load_data(data_path)
-    X, y = preprocess_data(df)
 
-    data_profile = {
-        "row_count": int(len(df)),
-        "columns": list(df.columns),
-        "missing_values": df.isnull().sum().to_dict(),
-        "target_distribution": df["Survived"].value_counts().to_dict(),
-    }
+    data_version = save_data_version(data_path, version_file)
+
+    current_profile = create_data_profile(df)
 
     with open("metrics/data_profile.json", "w") as file:
-        json.dump(data_profile, file, indent=4)
+        json.dump(current_profile, file, indent=4)
+
+    drift_report = detect_data_drift(
+        current_profile=current_profile,
+        reference_profile_path=reference_profile,
+        drift_report_path=drift_report_path,
+        threshold=drift_threshold
+    )
+
+    X, y = preprocess_data(df)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X,
@@ -101,24 +114,21 @@ def train_models():
 
     models = {
         "logistic_regression": LogisticRegression(max_iter=1000),
-        "random_forest": RandomForestClassifier(
-            n_estimators=100,
-            random_state=42
-        )
+        "random_forest": RandomForestClassifier(n_estimators=100, random_state=42)
     }
 
     version = datetime.now().strftime("v%Y%m%d%H%M%S")
 
     results = {}
-    best_model_name = None
     best_accuracy = 0
     best_pipeline = None
+    best_model_name = None
     best_model_file = None
     best_run_id = None
 
     for model_name, model in models.items():
         with mlflow.start_run(run_name=f"{model_name}_{version}") as run:
-            pipeline = Pipeline(steps=[
+            pipeline = Pipeline([
                 ("preprocessor", build_preprocessor()),
                 ("model", model)
             ])
@@ -137,21 +147,22 @@ def train_models():
 
             mlflow.log_param("model_name", model_name)
             mlflow.log_param("version", version)
-            mlflow.log_param("data_path", data_path)
-            mlflow.log_param("test_size", 0.2)
-            mlflow.log_param("registered_model_name", registered_model_name)
+            mlflow.log_param("data_hash", data_version["data_hash"])
+            mlflow.log_param("drift_detected", drift_report["drift_detected"])
 
             mlflow.log_metric("accuracy", accuracy)
             mlflow.log_metric("precision", precision)
             mlflow.log_metric("recall", recall)
             mlflow.log_metric("f1_score", f1)
 
+            mlflow.log_artifact(version_file)
             mlflow.log_artifact("metrics/data_profile.json")
+            mlflow.log_artifact(drift_report_path)
 
             mlflow.sklearn.log_model(
                 sk_model=pipeline,
                 artifact_path="model",
-                registered_model_name=registered_model_name
+                registered_model_name=config["mlflow"]["registered_model_name"]
             )
 
             results[model_name] = {
@@ -166,61 +177,59 @@ def train_models():
 
             if accuracy > best_accuracy:
                 best_accuracy = accuracy
-                best_model_name = model_name
                 best_pipeline = pipeline
+                best_model_name = model_name
                 best_model_file = model_file
                 best_run_id = run.info.run_id
 
-    previous_best_accuracy = get_previous_best_accuracy(registry_path)
+    previous_accuracy = get_previous_best_accuracy(registry_path)
 
     if best_accuracy < minimum_accuracy:
         raise ValueError(
-            f"Best model accuracy {best_accuracy} is below required minimum {minimum_accuracy}"
+            f"Training failed. Best accuracy {best_accuracy} is below minimum {minimum_accuracy}"
         )
 
-    if best_accuracy >= previous_best_accuracy:
+    if best_accuracy >= previous_accuracy:
         joblib.dump(best_pipeline, model_path)
-        production_model_updated = True
+        production_updated = True
         production_accuracy = best_accuracy
-        production_model_name = best_model_name
-        production_source_file = best_model_file
     else:
-        production_model_updated = False
-        production_accuracy = previous_best_accuracy
-        production_model_name = "previous_production_model"
-        production_source_file = model_path
+        production_updated = False
+        production_accuracy = previous_accuracy
 
     registry = {
         "version": version,
         "training_time": datetime.now().isoformat(),
-        "mlflow_experiment": experiment_name,
-        "mlflow_tracking_uri": mlflow_tracking_uri,
-        "mlflow_registered_model": registered_model_name,
+        "data_hash": data_version["data_hash"],
+        "data_version_file": version_file,
+        "drift_report_file": drift_report_path,
+        "drift_detected": drift_report["drift_detected"],
+        "best_model_name": best_model_name,
+        "best_model_file": best_model_file,
         "best_mlflow_run_id": best_run_id,
-        "new_training_best_model": best_model_name,
-        "new_training_best_accuracy": best_accuracy,
-        "previous_production_accuracy": previous_best_accuracy,
-        "minimum_required_accuracy": minimum_accuracy,
-        "production_model_updated": production_model_updated,
-        "production_model_name": production_model_name,
+        "new_training_accuracy": best_accuracy,
+        "previous_production_accuracy": previous_accuracy,
         "production_accuracy": production_accuracy,
+        "production_model_updated": production_updated,
         "production_model_file": model_path,
-        "production_source_file": production_source_file,
-        "data_profile_file": "metrics/data_profile.json",
+        "minimum_required_accuracy": minimum_accuracy,
         "metrics": results
     }
 
     with open(registry_path, "w") as file:
         json.dump(registry, file, indent=4)
 
+    append_registry_history(history_path, registry)
+
     with open("metrics/model_results.json", "w") as file:
         json.dump(results, file, indent=4)
 
-    print("Training completed.")
+    print("Strict ML training pipeline completed successfully.")
+    print(f"Data hash: {data_version['data_hash']}")
+    print(f"Drift detected: {drift_report['drift_detected']}")
     print(f"Best model: {best_model_name}")
     print(f"Best accuracy: {best_accuracy}")
-    print(f"MLflow run ID: {best_run_id}")
-    print(f"Production model updated: {production_model_updated}")
+    print(f"Production model updated: {production_updated}")
 
 
 if __name__ == "__main__":

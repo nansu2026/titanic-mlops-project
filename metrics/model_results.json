@@ -14,8 +14,8 @@
                 46
             ]
         ],
-        "model_file": "models/logistic_regression_v20260520190905.pkl",
-        "mlflow_run_id": "e318738a12ac4b20aea8322b10d11aa6"
+        "model_file": "models/logistic_regression_v20260520223140.pkl",
+        "mlflow_run_id": "477a684ddcff473ba224ed7ca3754a60"
     },
     "random_forest": {
         "accuracy": 0.8268156424581006,
@@ -32,7 +32,7 @@
                 51
             ]
         ],
-        "model_file": "models/random_forest_v20260520190905.pkl",
-        "mlflow_run_id": "aa3e36b1060b45f79536de7cb1a298b7"
+        "model_file": "models/random_forest_v20260520223140.pkl",
+        "mlflow_run_id": "f4cff5e248cf44e9bb74cb361caba6dc"
     }
 }

@@ -5,5 +5,5 @@ flask
 pytest
 joblib
 gunicorn
-mlflow
+mlflow==2.17.2
 pyyaml

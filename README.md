@@ -1,13 +1,46 @@
-The project focuses on CI/CD and Continuous Training.
+## MLOps Workflow
 
-CI/CD:
-Whenever code is pushed to GitHub, the CI pipeline installs dependencies, trains the model, runs tests, and stores MLflow artifacts. If CI passes, the deployment workflow builds a Docker image, deploys the application into Kubernetes, checks pod status, and tests the API endpoint.
+This project follows a complete MLOps workflow for Titanic survival prediction.
 
-Continuous Training:
-The training pipeline runs automatically when the data folder, source code, configuration file, or requirements file changes. In addition, a scheduled GitHub Actions cron job retrains the model every week. This ensures the model can be refreshed even if no manual training is started.
+### CI/CD
 
-MLflow:
-MLflow is used inside the training script to track experiments, metrics, parameters, and model artifacts. Each retraining run creates a new MLflow run, making model comparison and version tracking possible.
+When code is pushed to GitHub, the Continuous Integration pipeline runs automatically.  
+It installs dependencies, trains the model, runs tests, and uploads MLflow experiment results.
 
-Kubernetes:
-The application is containerized using Docker and deployed to Kubernetes. Kubernetes provides availability through multiple replicas and scalability through Horizontal Pod Autoscaler.
+### Continuous Training
+
+The Continuous Training pipeline runs automatically when files inside the `data/` folder, `src/` folder, `config.yaml`, `requirements.txt`, or `tests/` are changed.
+
+This means if the dataset changes, the model is retrained automatically.
+
+The project also has scheduled retraining every Sunday at midnight using GitHub Actions cron.
+
+### MLflow Tracking
+
+MLflow records model parameters, metrics, artifacts, and model versions.  
+The best model is saved as `models/best_model.pkl`.
+
+### Kubernetes Deployment
+
+The deployment pipeline builds a Docker image and deploys the Flask ML API to Kubernetes using KIND.
+
+### Scalability
+
+Scalability is handled using Kubernetes Horizontal Pod Autoscaler.
+
+The HPA can scale the application from 2 pods to 5 pods based on CPU usage.
+
+### Availability
+
+Availability is improved using:
+
+- 2 Kubernetes replicas
+- readiness probe
+- liveness probe
+- service-based routing
+
+If one pod fails, Kubernetes can route traffic to another healthy pod.
+
+### Reusability
+
+The project is reusable because configuration is separated into `config.yaml`, source code is modular, and the same workflow can be reused with another dataset or model.

@@ -2,8 +2,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: titanic-mlops-app
+  labels:
+    app: titanic-mlops-app
 spec:
   replicas: 2
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: titanic-mlops-app
@@ -14,10 +22,15 @@ spec:
     spec:
       containers:
         - name: titanic-mlops-app
-          image: titanic-mlops-app:latest
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/aneeshchittanjoor/titanic-mlops-app:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 5000
+          env:
+            - name: MODEL_PATH
+              value: "models/best_model.pkl"
+            - name: FLASK_ENV
+              value: "production"
           readinessProbe:
             httpGet:
               path: /health
@@ -28,7 +41,7 @@ spec:
             httpGet:
               path: /health
               port: 5000
-            initialDelaySeconds: 15
+            initialDelaySeconds: 20
             periodSeconds: 20
           resources:
             requests:
