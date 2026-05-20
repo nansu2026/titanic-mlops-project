@@ -1,0 +1,12 @@
+execution_duration_ms: 914
+request_preview: 'Read this aloud: Welcome to MLflow Tracing.'
+request_time: '2026-05-16T13:34:58.829Z'
+response_preview: '{"choices": [{"message": {"role": "assistant", "content": null,
+  "audio": {"data": "mlflow-attachment://52c4d16b-69ef-4dd8-8e34-dd536d804ead?content_type=audio%2Fwav&trace_id=tr-cbdac5c5e443eec2b0b4d4a96276ef5d&size=4044",
+  "transcript": "Welcome to MLflow Tracing."}}, "finish_reason": "stop"}]}'
+state: OK
+trace_id: tr-cbdac5c5e443eec2b0b4d4a96276ef5d
+trace_location:
+  mlflow_experiment:
+    experiment_id: '741238177185538462'
+  type: MLFLOW_EXPERIMENT

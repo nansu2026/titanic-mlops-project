@@ -5,3 +5,5 @@ flask
 pytest
 joblib
 gunicorn
+mlflow
+pyyaml

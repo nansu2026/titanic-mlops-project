@@ -1,0 +1,10 @@
+artifact_location: file:///workspaces/titanic-mlops-project/mlruns/313856144307421225/models/m-18604b83e77f46b4af5d5665ad8dd183/artifacts
+creation_timestamp: 1779287938771
+experiment_id: '313856144307421225'
+last_updated_timestamp: 1779287941321
+model_id: m-18604b83e77f46b4af5d5665ad8dd183
+model_type: null
+name: model
+source_run_id: 7f02da5f2cb2412a8854de2d007120bd
+status: 2
+status_message: null

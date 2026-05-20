@@ -15,11 +15,23 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t titanic-mlops-app .
+          docker build -t titanic-mlops-app:latest .
 
-      - name: Test Docker container
+      - name: Run Docker container
         run: |
-          docker run -d -p 5000:5000 --name titanic-container titanic-mlops-app
+          docker run -d -p 5000:5000 --name titanic-container titanic-mlops-app:latest
           sleep 10
-          curl http://localhost:5000/
+
+      - name: Test health endpoint
+        run: |
+          curl --fail http://localhost:5000/health
+
+      - name: Test prediction endpoint
+        run: |
+          curl --fail -X POST http://localhost:5000/predict \
+          -H "Content-Type: application/json" \
+          -d '{"Pclass":3,"Sex":"male","Age":25,"Fare":7.25,"Embarked":"S"}'
+
+      - name: Stop Docker container
+        run: |
           docker stop titanic-container

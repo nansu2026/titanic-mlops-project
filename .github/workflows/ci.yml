@@ -25,12 +25,19 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Train model before testing
+      - name: Train model with MLflow tracking
         run: |
           python src/train.py
 
       - name: Run tests
         run: |
           pytest
+
+      - name: Upload MLflow runs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-runs
+          path: mlruns/

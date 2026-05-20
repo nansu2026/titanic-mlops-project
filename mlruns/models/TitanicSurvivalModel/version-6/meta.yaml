@@ -1,0 +1,16 @@
+creation_timestamp: 1779296272582
+current_stage: None
+deployment_job_state: null
+description: null
+last_updated_timestamp: 1779296272582
+model_id: m-1791059ddf4a44af931a5d08cabf5157
+name: TitanicSurvivalModel
+run_id: ddb6dd71ce264b4eaff70d762664cdba
+run_link: null
+source: models:/m-1791059ddf4a44af931a5d08cabf5157
+status: READY
+status_message: null
+storage_location: file:///workspaces/titanic-mlops-project/mlruns/308024496201532493/models/m-1791059ddf4a44af931a5d08cabf5157/artifacts
+user_id: null
+version: 6
+workspace: default

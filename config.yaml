@@ -1,0 +1,16 @@
+data:
+  path: data/titanic.csv
+
+model:
+  path: models/best_model.pkl
+  registry_path: models/model_registry.json
+  minimum_accuracy: 0.75
+
+mlflow:
+  experiment_name: Titanic_MLOps_Experiment
+  tracking_uri: file:./mlruns
+  registered_model_name: TitanicSurvivalModel
+
+server:
+  host: 0.0.0.0
+  port: 5000

@@ -5,6 +5,7 @@ on:
     paths:
       - "data/**"
       - "src/**"
+      - "config.yaml"
   workflow_dispatch:
 
 jobs:
@@ -25,16 +26,21 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Train models
+      - name: Run automatic model training
         run: |
           python src/train.py
 
-      - name: Commit updated models and metrics
+      - name: Run tests after training
+        run: |
+          pytest
+
+      - name: Commit updated model, metrics, and MLflow metadata
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add models/ metrics/
-          git commit -m "Update trained models and metrics" || echo "No changes to commit"
+          git add models/ metrics/ mlruns/
+          git commit -m "Automatic model retraining after data or code change" || echo "No changes to commit"
           git push

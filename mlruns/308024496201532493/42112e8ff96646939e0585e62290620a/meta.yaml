@@ -1,0 +1,14 @@
+artifact_uri: file:///workspaces/titanic-mlops-project/mlruns/308024496201532493/42112e8ff96646939e0585e62290620a/artifacts
+end_time: 1779295719889
+entry_point_name: ''
+experiment_id: '308024496201532493'
+lifecycle_stage: active
+run_id: 42112e8ff96646939e0585e62290620a
+run_name: logistic_regression_v20260520164833
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1779295715765
+status: 3
+tags: []
+user_id: codespace

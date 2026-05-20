@@ -1,0 +1,14 @@
+artifact_uri: file:///workspaces/titanic-mlops-project/mlruns/308024496201532493/7032ad37fded43a8a80abaf9159c0cfa/artifacts
+end_time: 1779297158607
+entry_point_name: ''
+experiment_id: '308024496201532493'
+lifecycle_stage: active
+run_id: 7032ad37fded43a8a80abaf9159c0cfa
+run_name: random_forest_v20260520171231
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1779297155563
+status: 3
+tags: []
+user_id: codespace

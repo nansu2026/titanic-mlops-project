@@ -1,0 +1,8 @@
+artifact_location: file:///workspaces/titanic-mlops-project/mlruns/313856144307421225
+creation_time: 1779287935145
+experiment_id: '313856144307421225'
+last_update_time: 1779287935145
+lifecycle_stage: active
+name: titanic-survival-mlops
+trace_location: null
+workspace: default
