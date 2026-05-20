@@ -20,7 +20,7 @@ jobs:
 
       - name: Load Docker image into Kind
         run: |
-          kind load docker-image titanic-mlops-app:latest
+          kind load docker-image titanic-mlops-app:latest --name titanic-cluster
 
       - name: Apply Kubernetes manifests
         run: |
