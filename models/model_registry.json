@@ -1,5 +1,5 @@
 {
-    "version": "v20260520113928",
+    "version": "v20260520113817",
     "new_training_best_model": "logistic_regression",
     "new_training_best_accuracy": 0.7988826815642458,
     "previous_production_accuracy": 0.7988826815642458,
@@ -7,19 +7,19 @@
     "production_model_name": "logistic_regression",
     "production_accuracy": 0.7988826815642458,
     "production_model_file": "models/best_model.pkl",
-    "production_source_file": "models/logistic_regression_v20260520113928.pkl",
+    "production_source_file": "models/logistic_regression_v20260520113817.pkl",
     "metrics": {
         "logistic_regression": {
             "accuracy": 0.7988826815642458,
             "precision": 0.7638888888888888,
             "recall": 0.7432432432432432,
-            "model_file": "models/logistic_regression_v20260520113928.pkl"
+            "model_file": "models/logistic_regression_v20260520113817.pkl"
         },
         "random_forest": {
             "accuracy": 0.7821229050279329,
             "precision": 0.7272727272727273,
             "recall": 0.7567567567567568,
-            "model_file": "models/random_forest_v20260520113928.pkl"
+            "model_file": "models/random_forest_v20260520113817.pkl"
         }
     }
 }
