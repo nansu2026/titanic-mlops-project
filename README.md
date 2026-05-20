@@ -44,3 +44,16 @@ If one pod fails, Kubernetes can route traffic to another healthy pod.
 ### Reusability
 
 The project is reusable because configuration is separated into `config.yaml`, source code is modular, and the same workflow can be reused with another dataset or model.
+## Kubernetes Deployment
+
+This project demonstrates Kubernetes deployment using a KIND cluster inside the GitHub Actions CI/CD pipeline.
+
+The deployment includes:
+
+- Kubernetes Deployment for the Flask ML prediction API
+- Kubernetes Service to expose the application
+- Horizontal Pod Autoscaler for scalability
+- Readiness and liveness probes for availability
+- Rolling update strategy for safe deployment
+
+This setup demonstrates Kubernetes deployment in a CI/CD environment. For a production environment, the same Kubernetes YAML files can be deployed to a managed Kubernetes cluster such as AWS EKS, Azure AKS, or Google GKE.

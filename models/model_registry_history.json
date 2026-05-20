@@ -218,5 +218,170 @@
                 "mlflow_run_id": "f4cff5e248cf44e9bb74cb361caba6dc"
             }
         }
+    },
+    {
+        "version": "v20260520225512",
+        "training_time": "2026-05-20T22:55:18.602052",
+        "data_hash": "7d118fef8b6ccf7f81111877bc388536f7b1e498a655e3d649d19aaa010e9f6f",
+        "data_version_file": "metrics/data_version.json",
+        "drift_report_file": "metrics/drift_report.json",
+        "drift_detected": false,
+        "best_model_name": "random_forest",
+        "best_model_file": "models/random_forest_v20260520225512.pkl",
+        "best_mlflow_run_id": "bd3a56c75393473a9dfec7aa8aabe3ab",
+        "new_training_accuracy": 0.8268156424581006,
+        "previous_production_accuracy": 0.8268156424581006,
+        "production_accuracy": 0.8268156424581006,
+        "production_model_updated": true,
+        "production_model_file": "models/best_model.pkl",
+        "minimum_required_accuracy": 0.75,
+        "metrics": {
+            "logistic_regression": {
+                "accuracy": 0.770949720670391,
+                "precision": 0.71875,
+                "recall": 0.6666666666666666,
+                "f1_score": 0.6917293233082706,
+                "confusion_matrix": [
+                    [
+                        92,
+                        18
+                    ],
+                    [
+                        23,
+                        46
+                    ]
+                ],
+                "model_file": "models/logistic_regression_v20260520225512.pkl",
+                "mlflow_run_id": "89d061256e434d309326b4600ee3037b"
+            },
+            "random_forest": {
+                "accuracy": 0.8268156424581006,
+                "precision": 0.796875,
+                "recall": 0.7391304347826086,
+                "f1_score": 0.7669172932330827,
+                "confusion_matrix": [
+                    [
+                        97,
+                        13
+                    ],
+                    [
+                        18,
+                        51
+                    ]
+                ],
+                "model_file": "models/random_forest_v20260520225512.pkl",
+                "mlflow_run_id": "bd3a56c75393473a9dfec7aa8aabe3ab"
+            }
+        }
+    },
+    {
+        "version": "v20260520233214",
+        "training_time": "2026-05-20T23:32:20.624574",
+        "data_hash": "7d118fef8b6ccf7f81111877bc388536f7b1e498a655e3d649d19aaa010e9f6f",
+        "data_version_file": "metrics/data_version.json",
+        "drift_report_file": "metrics/drift_report.json",
+        "drift_detected": false,
+        "best_model_name": "random_forest",
+        "best_model_file": "models/random_forest_v20260520233214.pkl",
+        "best_mlflow_run_id": "636ce5a04dc448bd9233d0e2ba595368",
+        "new_training_accuracy": 0.8268156424581006,
+        "previous_production_accuracy": 0.8268156424581006,
+        "production_accuracy": 0.8268156424581006,
+        "production_model_updated": true,
+        "production_model_file": "models/best_model.pkl",
+        "minimum_required_accuracy": 0.75,
+        "metrics": {
+            "logistic_regression": {
+                "accuracy": 0.770949720670391,
+                "precision": 0.71875,
+                "recall": 0.6666666666666666,
+                "f1_score": 0.6917293233082706,
+                "confusion_matrix": [
+                    [
+                        92,
+                        18
+                    ],
+                    [
+                        23,
+                        46
+                    ]
+                ],
+                "model_file": "models/logistic_regression_v20260520233214.pkl",
+                "mlflow_run_id": "dda0e62748394607b4d8f28b169caada"
+            },
+            "random_forest": {
+                "accuracy": 0.8268156424581006,
+                "precision": 0.796875,
+                "recall": 0.7391304347826086,
+                "f1_score": 0.7669172932330827,
+                "confusion_matrix": [
+                    [
+                        97,
+                        13
+                    ],
+                    [
+                        18,
+                        51
+                    ]
+                ],
+                "model_file": "models/random_forest_v20260520233214.pkl",
+                "mlflow_run_id": "636ce5a04dc448bd9233d0e2ba595368"
+            }
+        }
+    },
+    {
+        "version": "v20260520233556",
+        "training_time": "2026-05-20T23:36:03.288144",
+        "data_hash": "7d118fef8b6ccf7f81111877bc388536f7b1e498a655e3d649d19aaa010e9f6f",
+        "data_version_file": "metrics/data_version.json",
+        "drift_report_file": "metrics/drift_report.json",
+        "drift_detected": false,
+        "best_model_name": "random_forest",
+        "best_model_file": "models/random_forest_v20260520233556.pkl",
+        "best_mlflow_run_id": "65df97b691e1427288b22f81f959cbd0",
+        "new_training_accuracy": 0.8268156424581006,
+        "previous_production_accuracy": 0.8268156424581006,
+        "production_accuracy": 0.8268156424581006,
+        "production_model_updated": true,
+        "production_model_file": "models/best_model.pkl",
+        "minimum_required_accuracy": 0.75,
+        "metrics": {
+            "logistic_regression": {
+                "accuracy": 0.770949720670391,
+                "precision": 0.71875,
+                "recall": 0.6666666666666666,
+                "f1_score": 0.6917293233082706,
+                "confusion_matrix": [
+                    [
+                        92,
+                        18
+                    ],
+                    [
+                        23,
+                        46
+                    ]
+                ],
+                "model_file": "models/logistic_regression_v20260520233556.pkl",
+                "mlflow_run_id": "747ef0fa93504aaca99e4fa2f1ae2056"
+            },
+            "random_forest": {
+                "accuracy": 0.8268156424581006,
+                "precision": 0.796875,
+                "recall": 0.7391304347826086,
+                "f1_score": 0.7669172932330827,
+                "confusion_matrix": [
+                    [
+                        97,
+                        13
+                    ],
+                    [
+                        18,
+                        51
+                    ]
+                ],
+                "model_file": "models/random_forest_v20260520233556.pkl",
+                "mlflow_run_id": "65df97b691e1427288b22f81f959cbd0"
+            }
+        }
     }
 ]
