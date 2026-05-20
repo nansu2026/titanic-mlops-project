@@ -8,47 +8,68 @@ on:
       - "config.yaml"
       - "requirements.txt"
       - "tests/**"
+
+  schedule:
+    - cron: "0 0 * * 0"
+
   workflow_dispatch:
 
 jobs:
-  continuous-training:
+  retrain-model:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Step 2: Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
 
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests before training
+      # Step 4: Create directories
+      - name: Create required directories
         run: |
-          pytest
+          mkdir -p models
+          mkdir -p metrics
+          mkdir -p mlruns
 
+      # Step 5: Run continuous training pipeline
       - name: Train model with MLflow
         run: |
           python src/train.py
 
-      - name: Upload trained model and metrics
+      # Step 6: Verify model creation
+      - name: Verify trained model exists
+        run: |
+          ls -la models/
+          test -f models/best_model.pkl
+
+      # Step 7: Upload trained model artifact
+      - name: Upload trained model
         uses: actions/upload-artifact@v4
         with:
-          name: trained-model-and-metrics
-          path: |
-            models/
-            metrics/
-            mlruns/
+          name: trained-model
+          path: models/
 
-      - name: Show model registry
-        run: |
-          cat models/model_registry.json
+      # Step 8: Upload metrics artifact
+      - name: Upload metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics
+          path: metrics/
 
-      - name: Show training results
-        run: |
-          cat metrics/model_results.json
+      # Step 9: Upload MLflow experiment tracking
+      - name: Upload MLflow runs
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-runs
+          path: mlruns/
