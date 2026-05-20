@@ -1,4 +1,65 @@
-mlruns/
+# Python virtual environment
+venv/
+.env/
+ENV/
+
+# Python cache
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# MLflow
+mlruns/
+
+# Model files (optional)
+models/*.pkl
+models/*.joblib
+
+# Dataset cache
+data/processed/
+
+# VS Code settings
+.vscode/
+
+# PyCharm
+.idea/
+
+# Mac system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+
+# Pytest cache
 .pytest_cache/
-*.pyc
+
+# Coverage reports
+htmlcov/
+.coverage
+
+# Kubernetes temp files
+*.yaml.bak
+
+# Docker
+*.tar
+
+# Environment variables
+.env
+
+# Temporary files
+tmp/
+temp/
+
+# GitHub Actions artifacts
+artifacts/
