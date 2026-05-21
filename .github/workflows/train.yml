@@ -1,4 +1,4 @@
-name: Continuous Training and Kubernetes Deployment
+name: MLOps Continuous Training and Kubernetes Deployment Pipeline
 
 on:
   push:
@@ -28,7 +28,8 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  continuous-training-build-deploy:
+  mlops-training-and-kubernetes-deployment:
+    name: Train Model, Build Docker Image and Deploy to Kubernetes
     runs-on: ubuntu-latest
 
     steps:
@@ -102,15 +103,27 @@ jobs:
           docker push $IMAGE_NAME:$IMAGE_TAG
           docker push $IMAGE_NAME:latest
 
+      - name: Check Kubernetes secret availability
+        run: |
+          if [ -z "${KUBE_CONFIG_BASE64}" ]; then
+            echo "USE_KIND=true" >> $GITHUB_ENV
+          else
+            echo "USE_KIND=false" >> $GITHUB_ENV
+          fi
+        env:
+          KUBE_CONFIG_BASE64: ${{ secrets.KUBE_CONFIG }}
+
       - name: Configure real Kubernetes cluster
-        if: ${{ secrets.KUBE_CONFIG != '' }}
+        if: env.USE_KIND == 'false'
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          echo "${KUBE_CONFIG_BASE64}" | base64 -d > ~/.kube/config
           kubectl cluster-info
+        env:
+          KUBE_CONFIG_BASE64: ${{ secrets.KUBE_CONFIG }}
 
       - name: Install KIND fallback cluster
-        if: ${{ secrets.KUBE_CONFIG == '' }}
+        if: env.USE_KIND == 'true'
         run: |
           curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.23.0/kind-linux-amd64
           chmod +x ./kind
