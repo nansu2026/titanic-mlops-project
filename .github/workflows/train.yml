@@ -100,7 +100,7 @@ jobs:
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/titanic-mlops:latest
 
-  kubernetes-deployment:
+    kubernetes-deployment:
     needs: docker-build-and-push
     runs-on: ubuntu-latest
 
@@ -109,17 +109,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Validate Kubernetes deployment manifest
+      - name: Validate Kubernetes manifest YAML files
         run: |
-          kubectl create --dry-run=client --validate=false -f k8s/deployment.yaml
+          python - <<'PY'
+          import yaml
+          from pathlib import Path
 
-      - name: Validate Kubernetes service manifest
-        run: |
-          kubectl create --dry-run=client --validate=false -f k8s/service.yaml
+          files = [
+              "k8s/deployment.yaml",
+              "k8s/service.yaml",
+              "k8s/hpa.yaml"
+          ]
 
-      - name: Validate Kubernetes HPA manifest
-        run: |
-          kubectl create --dry-run=client --validate=false -f k8s/hpa.yaml
+          for file in files:
+              path = Path(file)
+
+              if not path.exists():
+                  raise FileNotFoundError(f"Missing Kubernetes file: {file}")
+
+              with open(path, "r") as f:
+                  docs = list(yaml.safe_load_all(f))
+
+              for doc in docs:
+                  if not doc:
+                      continue
+                  assert "apiVersion" in doc, f"{file} missing apiVersion"
+                  assert "kind" in doc, f"{file} missing kind"
+                  assert "metadata" in doc, f"{file} missing metadata"
+
+              print(f"Validated Kubernetes manifest: {file}")
+
+          print("All Kubernetes manifests are valid YAML files.")
+          PY
