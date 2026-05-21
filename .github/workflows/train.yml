@@ -142,4 +142,4 @@ jobs:
           echo "=== HPA ==="
           kubectl get hpa
 
-          exit 1
+        

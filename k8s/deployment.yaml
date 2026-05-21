@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: titanic-mlops-app
-          image: nancyaneesh/titanic-mlops-app:latest
+          image: nancyaneesh/titanic-mlops:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
