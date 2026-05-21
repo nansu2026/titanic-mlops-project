@@ -125,7 +125,21 @@ jobs:
 
       - name: Verify Kubernetes deployment
         run: |
-          kubectl rollout status deployment/titanic-mlops-app --timeout=180s
-          kubectl get pods
+          kubectl rollout status deployment/titanic-mlops-app --timeout=300s || true
+
+          echo "=== PODS ==="
+          kubectl get pods -o wide
+
+          echo "=== DESCRIBE PODS ==="
+          kubectl describe pods
+
+          echo "=== LOGS ==="
+          kubectl logs -l app=titanic-mlops-app --all-containers=true --tail=100 || true
+
+          echo "=== SERVICES ==="
           kubectl get svc
+
+          echo "=== HPA ==="
           kubectl get hpa
+
+          exit 1
