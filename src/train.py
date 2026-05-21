@@ -25,6 +25,14 @@ def load_config():
         return yaml.safe_load(file)
 
 
+def safe_log_artifact(path):
+    if path and os.path.exists(path):
+        mlflow.log_artifact(path)
+        print(f"Logged artifact: {path}")
+    else:
+        print(f"Artifact not found, skipped: {path}")
+
+
 def build_preprocessor():
     numeric_features = ["Pclass", "Age", "Fare"]
     categorical_features = ["Sex", "Embarked"]
@@ -39,10 +47,12 @@ def build_preprocessor():
         ("encoder", OneHotEncoder(handle_unknown="ignore"))
     ])
 
-    return ColumnTransformer([
+    preprocessor = ColumnTransformer([
         ("num", numeric_transformer, numeric_features),
         ("cat", categorical_transformer, categorical_features)
     ])
+
+    return preprocessor
 
 
 def get_previous_best_accuracy(registry_path):
@@ -71,10 +81,8 @@ def train_models():
 
     data_path = config["data"]["path"]
     version_file = config["data"]["version_file"]
-
     reference_profile = config["data"]["reference_profile"]
     reference_dataset = config["data"]["reference_dataset"]
-
     drift_report_path = config["data"]["drift_report"]
     drift_p_value_threshold = config["data"]["drift_p_value_threshold"]
 
@@ -94,10 +102,15 @@ def train_models():
     data_version = save_data_version(data_path, version_file)
 
     current_profile = create_data_profile(df)
+    current_profile_path = "metrics/data_profile.json"
 
-    with open("metrics/data_profile.json", "w") as file:
+    with open(current_profile_path, "w") as file:
         json.dump(current_profile, file, indent=4)
 
+    if not os.path.exists(reference_profile):
+        with open(reference_profile, "w") as file:
+            json.dump(current_profile, file, indent=4)
+        print(f"Created missing reference profile: {reference_profile}")
 
     drift_report = detect_data_drift(
         current_df=df,
@@ -159,10 +172,11 @@ def train_models():
             mlflow.log_metric("recall", recall)
             mlflow.log_metric("f1_score", f1)
 
-            mlflow.log_artifact(version_file)
-            mlflow.log_artifact("metrics/data_profile.json")
-            mlflow.log_artifact(reference_profile)
-            mlflow.log_artifact(drift_report_path)
+            safe_log_artifact(version_file)
+            safe_log_artifact(current_profile_path)
+            safe_log_artifact(reference_profile)
+            safe_log_artifact(drift_report_path)
+            safe_log_artifact(model_file)
 
             mlflow.sklearn.log_model(
                 sk_model=pipeline,
@@ -232,8 +246,6 @@ def train_models():
         json.dump(results, file, indent=4)
 
     print("Strict ML training pipeline completed successfully.")
-    print(f"Data hash: {data_version['data_hash']}")
-    print(f"Drift detected: {drift_report['drift_detected']}")
     print(f"Best model: {best_model_name}")
     print(f"Best accuracy: {best_accuracy}")
     print(f"Production model updated: {production_updated}")
