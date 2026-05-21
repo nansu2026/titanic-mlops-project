@@ -1,21 +1,31 @@
-name: Continuous Training and ML Pipeline
+name: Continuous Training, Docker Build and Kubernetes Deployment
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - "data/**"
+      - "src/**"
+      - "app.py"
+      - "requirements.txt"
+      - "Dockerfile"
+      - "k8s/**"
+      - ".github/workflows/train.yml"
 
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
   schedule:
-    - cron: '0 0 * * 0'
+    - cron: "0 0 * * 0"
 
   workflow_dispatch:
 
+env:
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/titanic-mlops
+  IMAGE_TAG: latest
+
 jobs:
-  train-and-validate:
+  continuous-training:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,63 +35,62 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create metrics directory
+      - name: Create required folders
         run: |
-          mkdir -p metrics
+          mkdir -p models metrics mlruns
 
-      - name: Create empty reference profile if missing
+      - name: Run data validation
         run: |
-          if [ ! -f metrics/reference_data_profile.json ]; then
-            echo "{}" > metrics/reference_data_profile.json
-          fi
+          python src/data_validation.py
 
-      - name: Run preprocessing
-        run: |
-          python src/preprocess.py
-
-      - name: Train model with MLflow tracking
+      - name: Check data drift and trigger continuous training
         env:
-          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
-          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
-        run: |
-          python src/train.py
-
-      - name: Drift-triggered continuous training with MLflow
-        env:
-          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
-          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          MLFLOW_TRACKING_URI: file:./mlruns
         run: |
           python src/continuous_training_trigger.py
 
-      - name: Run unit tests
+      - name: Ensure model exists
+        run: |
+          test -f models/best_model.pkl
+
+      - name: Run tests
         run: |
           pytest tests/
 
       - name: Upload trained model artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: trained-model
+          name: trained-model-artifacts
           path: |
             models/
             metrics/
             mlruns/
 
   docker-build-and-push:
-    needs: train-and-validate
+    needs: continuous-training
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Download trained model artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: trained-model-artifacts
+          path: .
+
+      - name: Verify trained model is inside Docker build context
+        run: |
+          ls -lah models/
+          test -f models/best_model.pkl
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
@@ -89,13 +98,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Docker image
+      - name: Build Docker image with latest trained model
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/titanic-mlops:latest .
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/titanic-mlops:latest
+          docker push $IMAGE_NAME:$IMAGE_TAG
 
   kubernetes-deployment:
     needs: docker-build-and-push
@@ -105,36 +114,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate Kubernetes manifest YAML files
+      - name: Create local Kubernetes cluster
+        uses: helm/kind-action@v1.10.0
+
+      - name: Deploy application to Kubernetes
         run: |
-          python - <<'PY'
-          import yaml
-          from pathlib import Path
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/hpa.yaml
 
-          files = [
-              "k8s/deployment.yaml",
-              "k8s/service.yaml",
-              "k8s/hpa.yaml"
-          ]
-
-          for file in files:
-              path = Path(file)
-
-              if not path.exists():
-                  raise FileNotFoundError(f"Missing Kubernetes file: {file}")
-
-              with open(path, "r") as f:
-                  docs = list(yaml.safe_load_all(f))
-
-              for doc in docs:
-                  if not doc:
-                      continue
-
-                  assert "apiVersion" in doc, f"{file} missing apiVersion"
-                  assert "kind" in doc, f"{file} missing kind"
-                  assert "metadata" in doc, f"{file} missing metadata"
-
-              print(f"Validated Kubernetes manifest: {file}")
-
-          print("All Kubernetes manifests are valid YAML files.")
-          PY
+      - name: Verify Kubernetes deployment
+        run: |
+          kubectl rollout status deployment/titanic-mlops-app --timeout=180s
+          kubectl get pods
+          kubectl get svc
+          kubectl get hpa
