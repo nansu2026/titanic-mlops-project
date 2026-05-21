@@ -15,12 +15,10 @@ on:
   workflow_dispatch:
 
 jobs:
-
   train-and-validate:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -82,7 +80,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -100,12 +97,11 @@ jobs:
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/titanic-mlops:latest
 
-    kubernetes-deployment:
+  kubernetes-deployment:
     needs: docker-build-and-push
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -133,6 +129,7 @@ jobs:
               for doc in docs:
                   if not doc:
                       continue
+
                   assert "apiVersion" in doc, f"{file} missing apiVersion"
                   assert "kind" in doc, f"{file} missing kind"
                   assert "metadata" in doc, f"{file} missing metadata"
