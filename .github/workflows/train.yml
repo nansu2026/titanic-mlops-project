@@ -54,13 +54,13 @@ jobs:
         run: |
           python src/data_validation.py
 
-      - name: Continuous training with MLflow
-        env:
-          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
-          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
-        run: |
-          python src/train.py
+      - name: Drift-triggered continuous training with MLflow
+  env:
+    MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+    MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+    MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+  run: |
+    python src/continuous_training_trigger.py
 
       - name: Verify generated ML artifacts
         run: |

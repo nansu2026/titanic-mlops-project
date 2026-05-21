@@ -98,8 +98,6 @@ def train_models():
     with open("metrics/data_profile.json", "w") as file:
         json.dump(current_profile, file, indent=4)
 
-    with open(reference_profile, "w") as file:
-        json.dump(current_profile, file, indent=4)
 
     drift_report = detect_data_drift(
         current_df=df,

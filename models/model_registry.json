@@ -1,6 +1,6 @@
 {
-    "version": "v20260520235559",
-    "training_time": "2026-05-20T23:56:06.759822",
+    "version": "v20260521002102",
+    "training_time": "2026-05-21T00:21:07.785568",
     "data_hash": "7d118fef8b6ccf7f81111877bc388536f7b1e498a655e3d649d19aaa010e9f6f",
     "data_version_file": "metrics/data_version.json",
     "reference_profile_file": "metrics/reference_data_profile.json",
@@ -8,8 +8,8 @@
     "drift_report_file": "metrics/drift_report.json",
     "drift_detected": false,
     "best_model_name": "random_forest",
-    "best_model_file": "models/random_forest_v20260520235559.pkl",
-    "best_mlflow_run_id": "bde46cbaa4f14a798f67d51cde25544a",
+    "best_model_file": "models/random_forest_v20260521002102.pkl",
+    "best_mlflow_run_id": "26d1909704ae4533b4454496086d9c69",
     "new_training_accuracy": 0.8268156424581006,
     "previous_production_accuracy": 0.8268156424581006,
     "production_accuracy": 0.8268156424581006,
@@ -32,8 +32,8 @@
                     46
                 ]
             ],
-            "model_file": "models/logistic_regression_v20260520235559.pkl",
-            "mlflow_run_id": "d3671fddddc5417ca583b23ead71af47"
+            "model_file": "models/logistic_regression_v20260521002102.pkl",
+            "mlflow_run_id": "fbd3bb010ee74eb8ace23adf562a5ec8"
         },
         "random_forest": {
             "accuracy": 0.8268156424581006,
@@ -50,8 +50,8 @@
                     51
                 ]
             ],
-            "model_file": "models/random_forest_v20260520235559.pkl",
-            "mlflow_run_id": "bde46cbaa4f14a798f67d51cde25544a"
+            "model_file": "models/random_forest_v20260521002102.pkl",
+            "mlflow_run_id": "26d1909704ae4533b4454496086d9c69"
         }
     }
 }
